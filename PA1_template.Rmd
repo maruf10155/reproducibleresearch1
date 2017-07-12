@@ -1,0 +1,117 @@
+# Assignment 1
+
+## Loading the data and pre processing data
+
+```{r echo = TRUE}
+file = unzip("repdata_data_activity.zip")
+dat = read.csv(file)
+dat$date = as.Date( dat$date )
+head( dat )
+```
+
+## What is mean total number of steps taken per day?
+
+Total number of steps
+```{r echo = TRUE}
+totstep = aggregate(dat$steps ~ dat$date,data = dat,sum, na.rm = TRUE)
+```
+
+Histogram of total steps per day
+```{r echo = TRUE}
+hist( totstep[[2]], 20, main = " Total number of steps per day", xlab = "" )
+```
+
+Mean of steps per day
+```{r echo = TRUE}
+mean(totstep[[2]])
+```
+So, mean of number of steps per day is 10766.19
+
+Median of steps per day
+```{r echo = TRUE}
+median(totstep[[2]])
+```
+
+So, midean of number of steps per day is 10765
+
+## What is the average daily activity pattern?
+
+Average number of steps across all day
+```{r echo = TRUE}
+avgact = aggregate(dat$steps ~ dat$interval, data=dat,mean, na.rm=TRUE)
+plot(avgact$`dat$interval`,avgact$`dat$steps`,type = "l", xlab = "5 minutes interval", ylab = "Average of steps", main = "Average number of steps across all day ")
+```
+
+Which 5-minute interval contains maximum average
+
+```{r echo = TRUE}
+avgact[avgact[[2]] == max(avgact[[2]]),]
+```
+
+The 835-th 5-minute interval contains the maximum number of steps.
+
+## Imputing missing values
+
+Number of missing values
+```{r echo = TRUE}
+ sum(is.na(dat$steps))
+```
+There are 2304 missing values in the dataset.
+
+Assign a value for NA
+```{r echo = TRUE}
+newdat = dat
+for(i in 1:length(newdat$steps)){
+    if(is.na(newdat$steps[i]))
+        newdat$steps[i]=avgact[newdat$interval[i]==avgact$`dat$interval`,][[2]]
+}
+head(newdat)
+sum(is.na(newdat$steps))
+```
+Total NAs is 0. So, no NAs.
+
+Histogram of total steps for new dataset
+```{r echo = TRUE}
+totstep1 = aggregate(newdat$steps ~ newdat$date,data = newdat,sum, na.rm = TRUE)
+hist( totstep1[[2]], 20, main = " Total number of steps per day", xlab = "" )
+```
+
+Mean of steps per day
+```{r echo = TRUE}
+mean(totstep1[[2]])
+```
+Mean is 10766.19
+
+
+Median of steps per day
+```{r echo = TRUE}
+median(totstep1[[2]])
+```
+Midean is  10766.19.
+
+Mean and Median of initial dataset and mean and median of final dataset is almost equal. So, no difference between two datasets.
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+Creating factor with two levels "weekday" and "weekend"
+
+```{r echo = TRUE}
+newdat$week=weekdays(newdat$date)
+for( i in 1:nrow(newdat)){
+    if(newdat$week[i]=="Sunday"|newdat$week[i]=="Saturday") newdat$week[i]="weekend"
+    else{ newdat$week[i]="weekday"
+    }
+}
+newdat$week=as.factor(newdat$week)
+class(newdat$week)
+head(newdat)
+```
+So, class of week variable is factor.
+
+Panel plot of total steps across all weekday and weekwnd
+
+```{r echo = TRUE}
+totstep2=aggregate(steps~interval+week, data = newdat, mean)
+library(lattice)
+xyplot(steps~interval|week, data = totstep2, type = "l", layout = c(1,2), main = "Average munber of steps per weekday and weekend", xlab = "5 minute interval", ylab = "Average steps")
+```
